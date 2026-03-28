@@ -74,8 +74,9 @@ import { ConfettiComponent } from './confetti/confetti.component';
       flex-direction: column;
       align-items: center;
       min-height: 100vh;
-      padding: 2rem;
-      gap: 1.5rem;
+      min-height: 100dvh;
+      padding: 1.5rem 1rem;
+      gap: 1.25rem;
     }
     .header {
       display: flex;
@@ -146,7 +147,7 @@ import { ConfettiComponent } from './confetti/confetti.component';
     }
     .player-indicators {
       display: flex;
-      gap: 2rem;
+      gap: 1rem;
     }
     .player {
       display: flex;

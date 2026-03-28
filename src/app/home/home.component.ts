@@ -50,12 +50,13 @@ import { GameService } from '../services/game.service';
       padding: 2rem;
     }
     .title {
-      font-size: 3rem;
+      font-size: clamp(2rem, 8vw, 3rem);
       font-weight: 700;
       margin-bottom: 0.5rem;
       background: linear-gradient(135deg, #22d3ee, #fb7185);
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
+      text-align: center;
     }
     .subtitle {
       color: #a3a3a3;

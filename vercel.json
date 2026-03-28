@@ -2,7 +2,7 @@
   "framework": "angular",
   "devCommand": "npx ng serve --port $PORT",
   "buildCommand": "npx ng build",
-  "outputDirectory": "dist/tic-tac-toe",
+  "outputDirectory": "dist/tic-tac-toe/browser",
   "rewrites": [
     { "source": "/api/(.*)", "destination": "/api/$1" },
     { "source": "/(.*)", "destination": "/index.html" }

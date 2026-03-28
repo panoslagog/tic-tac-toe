@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, signal } from '@angular/core';
+import { Component, OnInit, OnDestroy, signal, inject } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { GameService } from '../services/game.service';
 import { BoardComponent } from './board/board.component';
@@ -199,6 +199,10 @@ import { ConfettiComponent } from './confetti/confetti.component';
   `],
 })
 export class GameComponent implements OnInit, OnDestroy {
+  private gameService = inject(GameService);
+  private route = inject(ActivatedRoute);
+  private router = inject(Router);
+
   emptyBoard: (null)[] = Array(9).fill(null);
   copied = signal(false);
 
@@ -207,12 +211,6 @@ export class GameComponent implements OnInit, OnDestroy {
   myPlayer = this.gameService.myPlayer;
   isMyTurn = this.gameService.isMyTurn;
   connectionLost = this.gameService.connectionLost;
-
-  constructor(
-    private gameService: GameService,
-    private route: ActivatedRoute,
-    private router: Router,
-  ) {}
 
   ngOnInit() {
     if (!this.gameService.roomCode()) {

@@ -1,6 +1,7 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { getGame, setGame } from '../../_lib/redis.js';
 import { getPlayerByToken } from '../../_lib/game-logic.js';
+import { pickRandomWord } from '../../_lib/hangman-logic.js';
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (req.method !== 'POST') {
@@ -28,14 +29,29 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return res.status(400).json({ error: 'Game is still in progress' });
   }
 
-  // Reset the board, swap who goes first
-  state.board = Array(9).fill(null);
-  state.currentTurn = state.currentTurn === 'X' ? 'O' : 'X';
-  state.status = 'playing';
-  state.winner = null;
-  state.winLine = null;
-  state.lastActivity = Date.now();
+  if (state.type === 'tictactoe') {
+    state.board = Array(9).fill(null);
+    state.currentTurn = state.currentTurn === 'X' ? 'O' : 'X';
+    state.status = 'playing';
+    state.winner = null;
+    state.winLine = null;
+    state.lastActivity = Date.now();
+    await setGame(roomCode, state);
+    return res.status(200).json({ ok: true });
+  }
 
-  await setGame(roomCode, state);
-  return res.status(200).json({ ok: true });
+  if (state.type === 'hangman') {
+    state.word = pickRandomWord(state.language);
+    state.status = 'playing';
+    state.winner = null;
+    state.lastActivity = Date.now();
+    state.playerState = {
+      X: { guessedLetters: [], wrongGuesses: [], lives: 6, solved: false, solvedAt: null },
+      O: { guessedLetters: [], wrongGuesses: [], lives: 6, solved: false, solvedAt: null },
+    };
+    await setGame(roomCode, state);
+    return res.status(200).json({ ok: true });
+  }
+
+  return res.status(400).json({ error: 'Unknown game type' });
 }

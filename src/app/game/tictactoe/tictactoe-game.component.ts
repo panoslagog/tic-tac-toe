@@ -1,12 +1,12 @@
 import { Component, OnInit, OnDestroy, signal, inject } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import { GameService } from '../services/game.service';
-import { BoardComponent } from './board/board.component';
-import { WinLineComponent } from './win-line/win-line.component';
-import { ConfettiComponent } from './confetti/confetti.component';
+import { GameService } from '../../services/game.service';
+import { BoardComponent } from '../board/board.component';
+import { WinLineComponent } from '../win-line/win-line.component';
+import { ConfettiComponent } from '../confetti/confetti.component';
 
 @Component({
-  selector: 'app-game',
+  selector: 'app-tictactoe-game',
   standalone: true,
   imports: [BoardComponent, WinLineComponent, ConfettiComponent],
   template: `
@@ -42,11 +42,11 @@ import { ConfettiComponent } from './confetti/confetti.component';
       </div>
 
       <div class="player-indicators">
-        <div class="player" [class.active]="gameState()?.currentTurn === 'X'" [class.you]="myPlayer() === 'X'">
+        <div class="player" [class.active]="tttState()?.currentTurn === 'X'" [class.you]="myPlayer() === 'X'">
           <span class="player-mark x">X</span>
           <span class="player-label">{{ myPlayer() === 'X' ? 'You' : 'Opponent' }}</span>
         </div>
-        <div class="player" [class.active]="gameState()?.currentTurn === 'O'" [class.you]="myPlayer() === 'O'">
+        <div class="player" [class.active]="tttState()?.currentTurn === 'O'" [class.you]="myPlayer() === 'O'">
           <span class="player-mark o">O</span>
           <span class="player-label">{{ myPlayer() === 'O' ? 'You' : 'Opponent' }}</span>
         </div>
@@ -54,12 +54,12 @@ import { ConfettiComponent } from './confetti/confetti.component';
 
       <div class="board-wrapper">
         <app-board
-          [board]="gameState()?.board ?? emptyBoard"
+          [board]="tttState()?.board ?? emptyBoard"
           [interactive]="isMyTurn()"
-          [winLine]="gameState()?.winLine ?? null"
+          [winLine]="tttState()?.winLine ?? null"
           (cellClicked)="onCellClick($event)"
         />
-        <app-win-line [winLine]="gameState()?.winLine ?? null" />
+        <app-win-line [winLine]="tttState()?.winLine ?? null" />
       </div>
 
       @if (gameState()?.status === 'won' || gameState()?.status === 'draw') {
@@ -199,7 +199,7 @@ import { ConfettiComponent } from './confetti/confetti.component';
     }
   `],
 })
-export class GameComponent implements OnInit, OnDestroy {
+export class TicTacToeGameComponent implements OnInit, OnDestroy {
   private gameService = inject(GameService);
   private route = inject(ActivatedRoute);
   private router = inject(Router);
@@ -213,6 +213,8 @@ export class GameComponent implements OnInit, OnDestroy {
   isMyTurn = this.gameService.isMyTurn;
   connectionLost = this.gameService.connectionLost;
 
+  tttState = this.gameService.tttState;
+
   ngOnInit() {
     if (!this.gameService.roomCode()) {
       this.router.navigate(['/']);
@@ -224,7 +226,7 @@ export class GameComponent implements OnInit, OnDestroy {
   }
 
   async onCellClick(position: number) {
-    await this.gameService.makeMove(position);
+    await this.gameService.makeMove({ position });
   }
 
   async copyRoomCode() {

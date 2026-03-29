@@ -4,7 +4,6 @@
   "buildCommand": "npx ng build",
   "outputDirectory": "dist/tic-tac-toe/browser",
   "rewrites": [
-    { "source": "/api/(.*)", "destination": "/api/$1" },
-    { "source": "/(.*)", "destination": "/index.html" }
+    { "source": "/((?!api/).*)", "destination": "/index.html" }
   ]
 }

@@ -10,7 +10,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  const { type = 'tictactoe', language } = req.body as { type?: string; language?: string };
+  const { type = 'tictactoe', language, category } = req.body as { type?: string; language?: string; category?: string };
 
   if (type !== 'tictactoe' && type !== 'hangman') {
     return res.status(400).json({ error: `Unknown game type: ${type}` });
@@ -35,7 +35,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
   const playerToken = uuidv4();
   const state = type === 'hangman'
-    ? createHangmanState(playerToken, language as 'en' | 'el')
+    ? createHangmanState(playerToken, language as 'en' | 'el', category as any)
     : createTicTacToeState(playerToken);
   await setGame(roomCode, state);
 

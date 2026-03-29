@@ -1,5 +1,6 @@
 export type Player = 'X' | 'O';
 export type GameType = 'tictactoe' | 'hangman';
+export type HangmanCategory = 'animals' | 'food' | 'nature' | 'body' | 'home' | 'places' | 'sports' | 'professions' | 'clothing' | 'music' | 'other';
 
 // --- Base ---
 
@@ -45,6 +46,7 @@ export interface HangmanGameState extends BaseGameState {
   type: 'hangman';
   word: string;
   language: 'en' | 'el';
+  category: HangmanCategory;
   playerState: {
     X: HangmanPlayerState;
     O: HangmanPlayerState;
@@ -54,6 +56,7 @@ export interface HangmanGameState extends BaseGameState {
 export interface HangmanPublicState {
   type: 'hangman';
   language: 'en' | 'el';
+  category: HangmanCategory;
   status: 'waiting' | 'playing' | 'won' | 'draw';
   winner: Player | null;
   you: Player | null;

@@ -41,7 +41,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 
   if (state.type === 'hangman') {
-    state.word = pickRandomWord(state.language);
+    state.word = pickRandomWord(state.language, state.category);
     state.status = 'playing';
     state.winner = null;
     state.lastActivity = Date.now();

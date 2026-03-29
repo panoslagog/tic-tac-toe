@@ -1,4 +1,4 @@
-import type { HangmanGameState, HangmanPublicState, HangmanPlayerState, Player } from './types.js';
+import type { HangmanGameState, HangmanPublicState, HangmanPlayerState, Player, HangmanCategory } from './types.js';
 import { getPlayerByToken } from './game-logic.js';
 import enWords from './words/en.json' with { type: 'json' };
 import elWords from './words/el.json' with { type: 'json' };
@@ -6,9 +6,30 @@ import elWords from './words/el.json' with { type: 'json' };
 const INITIAL_LIVES = 6;
 const WRONG_WORD_PENALTY = 2;
 
-export function pickRandomWord(language: 'en' | 'el'): string {
-  const words = language === 'en' ? enWords : elWords;
-  return words[Math.floor(Math.random() * words.length)];
+const ALL_CATEGORIES: HangmanCategory[] = [
+  'animals', 'food', 'nature', 'body', 'home', 'places', 'sports',
+  'professions', 'clothing', 'music', 'other',
+];
+
+export function getCategories(): HangmanCategory[] {
+  return ALL_CATEGORIES;
+}
+
+export function pickRandomWord(language: 'en' | 'el', category?: HangmanCategory): string {
+  const wordMap: Record<string, string[]> = language === 'en'
+    ? (enWords as Record<string, string[]>)
+    : (elWords as Record<string, string[]>);
+
+  if (category && category !== ('random' as HangmanCategory)) {
+    const pool = wordMap[category] ?? [];
+    if (pool.length > 0) {
+      return pool[Math.floor(Math.random() * pool.length)];
+    }
+  }
+
+  // No category or empty pool — pick from all words across all categories
+  const allWords = Object.values(wordMap).flat();
+  return allWords[Math.floor(Math.random() * allWords.length)];
 }
 
 export function normalizeInput(input: string): string {
@@ -35,11 +56,13 @@ function createPlayerState(): HangmanPlayerState {
   };
 }
 
-export function createHangmanState(playerXToken: string, language: 'en' | 'el'): HangmanGameState {
+export function createHangmanState(playerXToken: string, language: 'en' | 'el', category?: HangmanCategory): HangmanGameState {
+  const resolvedCategory: HangmanCategory = category ?? 'other';
   return {
     type: 'hangman',
-    word: pickRandomWord(language),
+    word: pickRandomWord(language, category),
     language,
+    category: resolvedCategory,
     players: { X: playerXToken, O: null },
     status: 'waiting',
     winner: null,
@@ -142,6 +165,7 @@ export function toHangmanPublicState(state: HangmanGameState, playerToken: strin
   return {
     type: 'hangman',
     language: state.language,
+    category: state.category,
     status: state.status,
     winner: state.winner,
     you,

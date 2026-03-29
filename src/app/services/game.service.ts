@@ -4,6 +4,7 @@ import { firstValueFrom } from 'rxjs';
 
 export type Player = 'X' | 'O';
 export type GameType = 'tictactoe' | 'hangman';
+export type HangmanCategory = 'animals' | 'food' | 'nature' | 'body' | 'home' | 'places' | 'sports' | 'professions' | 'clothing' | 'music' | 'other';
 
 export interface TicTacToePublicState {
   type: 'tictactoe';
@@ -19,6 +20,7 @@ export interface TicTacToePublicState {
 export interface HangmanPublicState {
   type: 'hangman';
   language: 'en' | 'el';
+  category: HangmanCategory;
   status: 'waiting' | 'playing' | 'won' | 'draw';
   winner: Player | null;
   you: Player | null;
@@ -87,9 +89,10 @@ export class GameService {
     return h;
   }
 
-  async createGame(type: GameType = 'tictactoe', language?: 'en' | 'el'): Promise<{ roomCode: string; type: GameType }> {
+  async createGame(type: GameType = 'tictactoe', language?: 'en' | 'el', category?: string): Promise<{ roomCode: string; type: GameType }> {
     const body: Record<string, string> = { type };
     if (language) body['language'] = language;
+    if (category) body['category'] = category;
 
     const res = await firstValueFrom(
       this.http.post<CreateGameResponse>('/api/game', body)

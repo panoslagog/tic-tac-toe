@@ -21,6 +21,18 @@ describe('pickRandomWord', () => {
     expect(word.length).toBeGreaterThanOrEqual(3);
     expect(word).toMatch(/^[\u0391-\u03A9]+$/);
   });
+
+  it('returns a word from the specified category', () => {
+    const word = pickRandomWord('en', 'animals');
+    expect(word).toMatch(/^[A-Z]+$/);
+    expect(word.length).toBeGreaterThanOrEqual(4);
+  });
+
+  it('falls back to all words when category is not provided', () => {
+    const word = pickRandomWord('en', undefined);
+    expect(word).toMatch(/^[A-Z]+$/);
+    expect(word.length).toBeGreaterThanOrEqual(4);
+  });
 });
 
 describe('normalizeInput', () => {
@@ -50,7 +62,7 @@ describe('getMaskedWord', () => {
 
 describe('processLetterGuess', () => {
   it('reveals correct letter and does not lose a life', () => {
-    const state = createHangmanState('token-x', 'en');
+    const state = createHangmanState('token-x', 'en', 'other');
     state.players.O = 'token-o';
     state.status = 'playing';
     (state as any).word = 'HELLO';
@@ -63,7 +75,7 @@ describe('processLetterGuess', () => {
   });
 
   it('penalizes wrong letter with 1 life', () => {
-    const state = createHangmanState('token-x', 'en');
+    const state = createHangmanState('token-x', 'en', 'other');
     state.players.O = 'token-o';
     state.status = 'playing';
     (state as any).word = 'HELLO';
@@ -75,7 +87,7 @@ describe('processLetterGuess', () => {
   });
 
   it('ignores already-guessed letter', () => {
-    const state = createHangmanState('token-x', 'en');
+    const state = createHangmanState('token-x', 'en', 'other');
     state.players.O = 'token-o';
     state.status = 'playing';
     (state as any).word = 'HELLO';
@@ -87,7 +99,7 @@ describe('processLetterGuess', () => {
   });
 
   it('marks player as solved when all letters revealed', () => {
-    const state = createHangmanState('token-x', 'en');
+    const state = createHangmanState('token-x', 'en', 'other');
     state.players.O = 'token-o';
     state.status = 'playing';
     (state as any).word = 'HI';
@@ -101,7 +113,7 @@ describe('processLetterGuess', () => {
 
 describe('processWordGuess', () => {
   it('solves immediately on correct word', () => {
-    const state = createHangmanState('token-x', 'en');
+    const state = createHangmanState('token-x', 'en', 'other');
     state.players.O = 'token-o';
     state.status = 'playing';
     (state as any).word = 'HELLO';
@@ -113,7 +125,7 @@ describe('processWordGuess', () => {
   });
 
   it('penalizes wrong word guess with 2 lives', () => {
-    const state = createHangmanState('token-x', 'en');
+    const state = createHangmanState('token-x', 'en', 'other');
     state.players.O = 'token-o';
     state.status = 'playing';
     (state as any).word = 'HELLO';
@@ -127,7 +139,7 @@ describe('processWordGuess', () => {
 
 describe('toHangmanPublicState', () => {
   it('masks word based on player guesses', () => {
-    const state = createHangmanState('token-x', 'en');
+    const state = createHangmanState('token-x', 'en', 'other');
     state.players.O = 'token-o';
     state.status = 'playing';
     (state as any).word = 'HELLO';
@@ -140,7 +152,7 @@ describe('toHangmanPublicState', () => {
   });
 
   it('reveals word when game is over', () => {
-    const state = createHangmanState('token-x', 'en');
+    const state = createHangmanState('token-x', 'en', 'other');
     state.players.O = 'token-o';
     state.status = 'draw';
     (state as any).word = 'HELLO';
@@ -150,7 +162,7 @@ describe('toHangmanPublicState', () => {
   });
 
   it('shows opponent lives but not their letters', () => {
-    const state = createHangmanState('token-x', 'en');
+    const state = createHangmanState('token-x', 'en', 'other');
     state.players.O = 'token-o';
     state.status = 'playing';
     (state as any).word = 'HELLO';

@@ -1,6 +1,6 @@
 import { Component, OnInit, OnDestroy, signal, inject, computed } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import { GameService, HangmanPublicState } from '../../services/game.service';
+import { GameService, HangmanPublicState, HangmanCategory } from '../../services/game.service';
 import { GallowsComponent } from './gallows/gallows.component';
 import { WordDisplayComponent } from './word-display/word-display.component';
 import { KeyboardComponent } from './keyboard/keyboard.component';
@@ -15,13 +15,20 @@ import { OpponentStatusComponent } from './opponent-status/opponent-status.compo
     <div class="game-container">
       <div class="header">
         <h1 class="logo">Hangman</h1>
-        @if (roomCode()) {
-          <div class="room-badge" (click)="copyRoomCode()">
-            <span class="room-label">Room</span>
-            <span class="room-code">{{ roomCode() }}</span>
-            <span class="copy-hint">{{ copied() ? 'Link copied!' : 'Share invite link' }}</span>
-          </div>
-        }
+        <div class="header-badges">
+          @if (roomCode()) {
+            <div class="room-badge" (click)="copyRoomCode()">
+              <span class="room-label">Room</span>
+              <span class="room-code">{{ roomCode() }}</span>
+              <span class="copy-hint">{{ copied() ? 'Link copied!' : 'Share invite link' }}</span>
+            </div>
+          }
+          @if (hangmanState()?.category) {
+            <div class="category-badge">
+              <span class="category-label">{{ categoryLabel(hangmanState()!.category) }}</span>
+            </div>
+          }
+        </div>
       </div>
 
       <div class="status-bar">
@@ -80,11 +87,14 @@ import { OpponentStatusComponent } from './opponent-status/opponent-status.compo
     .game-container { display: flex; flex-direction: column; align-items: center; min-height: 100vh; min-height: 100dvh; padding: 1.5rem 1rem; gap: 1.25rem; }
     .header { display: flex; flex-direction: column; align-items: center; gap: 1rem; }
     .logo { font-size: 1.5rem; font-weight: 700; color: #e5e5e5; }
+    .header-badges { display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; justify-content: center; }
     .room-badge { display: flex; align-items: center; gap: 0.5rem; padding: 0.5rem 1rem; background: #171717; border: 1px solid #333; border-radius: 8px; cursor: pointer; transition: border-color 0.15s; }
     .room-badge:hover { border-color: #525252; }
     .room-label { font-size: 0.75rem; color: #737373; text-transform: uppercase; letter-spacing: 0.05em; }
     .room-code { font-family: monospace; font-size: 1.1rem; font-weight: 700; color: #e5e5e5; letter-spacing: 0.15em; }
     .copy-hint { font-size: 0.7rem; color: #525252; }
+    .category-badge { padding: 0.35rem 0.75rem; background: rgba(251, 146, 60, 0.08); border: 1px solid rgba(251, 146, 60, 0.4); border-radius: 20px; }
+    .category-label { font-size: 0.75rem; font-weight: 600; color: #fb923c; text-transform: uppercase; letter-spacing: 0.05em; }
     .status-bar { min-height: 2rem; display: flex; align-items: center; }
     .status-text { font-size: 1.1rem; font-weight: 600; }
     .status-text.playing { color: #22d3ee; }
@@ -161,5 +171,22 @@ export class HangmanGameComponent implements OnInit, OnDestroy {
 
   async playAgain() {
     await this.gameService.rematch();
+  }
+
+  categoryLabel(category: HangmanCategory): string {
+    const labels: Record<HangmanCategory, string> = {
+      animals: 'Animals',
+      food: 'Food & Drink',
+      nature: 'Nature',
+      body: 'Body Parts',
+      home: 'Home & Objects',
+      places: 'Places',
+      sports: 'Sports',
+      professions: 'Professions',
+      clothing: 'Clothing',
+      music: 'Music',
+      other: 'Other',
+    };
+    return labels[category] ?? category;
   }
 }

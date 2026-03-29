@@ -3,6 +3,11 @@ import { Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { GameService, GameType } from '../services/game.service';
 
+interface CategoryOption {
+  value: string;
+  label: string;
+}
+
 @Component({
   selector: 'app-home',
   standalone: true,
@@ -22,6 +27,11 @@ import { GameService, GameType } from '../services/game.service';
           <div class="language-picker">
             <button class="lang-btn" [class.active]="selectedLanguage() === 'en'" (click)="selectedLanguage.set('en')">English</button>
             <button class="lang-btn" [class.active]="selectedLanguage() === 'el'" (click)="selectedLanguage.set('el')">Greek</button>
+          </div>
+          <div class="category-picker">
+            @for (cat of categoryOptions; track cat.value) {
+              <button class="cat-btn" [class.active]="selectedCategory() === cat.value" (click)="selectedCategory.set(cat.value)">{{ cat.label }}</button>
+            }
           </div>
         }
 
@@ -46,12 +56,16 @@ import { GameService, GameType } from '../services/game.service';
     .home-container { display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; padding: 2rem; }
     .title { font-size: clamp(2rem, 8vw, 3rem); font-weight: 700; margin-bottom: 0.5rem; background: linear-gradient(135deg, #22d3ee, #fb7185); -webkit-background-clip: text; -webkit-text-fill-color: transparent; text-align: center; }
     .subtitle { color: #a3a3a3; margin-bottom: 3rem; font-size: 1.1rem; }
-    .actions { display: flex; flex-direction: column; align-items: center; gap: 1.5rem; width: 100%; max-width: 320px; }
+    .actions { display: flex; flex-direction: column; align-items: center; gap: 1.5rem; width: 100%; max-width: 380px; }
     .game-type-picker, .language-picker { display: flex; gap: 0.5rem; width: 100%; }
     .type-btn, .lang-btn { flex: 1; padding: 0.75rem; border: 1px solid #333; border-radius: 10px; background: #171717; color: #a3a3a3; font-size: 0.9rem; font-weight: 600; cursor: pointer; transition: all 0.15s; }
     .type-btn:hover, .lang-btn:hover { border-color: #525252; }
     .type-btn.active { border-color: #22d3ee; color: #22d3ee; background: rgba(34, 211, 238, 0.08); }
     .lang-btn.active { border-color: #a78bfa; color: #a78bfa; background: rgba(167, 139, 250, 0.08); }
+    .category-picker { display: flex; flex-wrap: wrap; gap: 0.4rem; width: 100%; justify-content: center; }
+    .cat-btn { padding: 0.35rem 0.75rem; border: 1px solid #333; border-radius: 20px; background: #171717; color: #a3a3a3; font-size: 0.78rem; font-weight: 600; cursor: pointer; transition: all 0.15s; white-space: nowrap; }
+    .cat-btn:hover { border-color: #525252; }
+    .cat-btn.active { border-color: #fb923c; color: #fb923c; background: rgba(251, 146, 60, 0.08); }
     .btn { width: 100%; padding: 0.875rem 1.5rem; border: none; border-radius: 12px; font-size: 1rem; font-weight: 600; cursor: pointer; transition: transform 0.15s, box-shadow 0.15s; }
     .btn:hover:not(:disabled) { transform: scale(1.03); }
     .btn:disabled { opacity: 0.5; cursor: not-allowed; }
@@ -72,6 +86,21 @@ export class HomeComponent {
   errorMsg = signal('');
   selectedType = signal<GameType>('tictactoe');
   selectedLanguage = signal<'en' | 'el'>('en');
+  selectedCategory = signal<string>('random');
+
+  categoryOptions: CategoryOption[] = [
+    { value: 'random', label: 'Random' },
+    { value: 'animals', label: 'Animals' },
+    { value: 'food', label: 'Food & Drink' },
+    { value: 'nature', label: 'Nature' },
+    { value: 'body', label: 'Body Parts' },
+    { value: 'home', label: 'Home & Objects' },
+    { value: 'places', label: 'Places' },
+    { value: 'sports', label: 'Sports' },
+    { value: 'professions', label: 'Professions' },
+    { value: 'clothing', label: 'Clothing' },
+    { value: 'music', label: 'Music' },
+  ];
 
   constructor(private gameService: GameService, private router: Router) {}
 
@@ -81,7 +110,9 @@ export class HomeComponent {
     try {
       const type = this.selectedType();
       const language = type === 'hangman' ? this.selectedLanguage() : undefined;
-      const { roomCode } = await this.gameService.createGame(type, language);
+      const rawCategory = this.selectedCategory();
+      const category = type === 'hangman' && rawCategory !== 'random' ? rawCategory : undefined;
+      const { roomCode } = await this.gameService.createGame(type, language, category);
       this.router.navigate(['/game', type, roomCode]);
     } catch {
       this.errorMsg.set('Failed to create game. Please try again.');

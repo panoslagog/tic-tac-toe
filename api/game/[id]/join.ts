@@ -20,8 +20,12 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return res.status(400).json({ error: 'Game is full' });
   }
 
+  const { username } = req.body as { username?: string };
   const playerToken = uuidv4();
   state.players.O = playerToken;
+  if (!state.usernames) state.usernames = { X: null, O: null };
+  state.usernames.O = username || null;
+  if (!state.scores) state.scores = { X: 0, O: 0 };
   state.status = 'playing';
   state.lastActivity = Date.now();
   if (state.type === 'hangman') {

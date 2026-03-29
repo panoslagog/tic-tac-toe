@@ -47,11 +47,13 @@ export function generateRoomCode(): string {
   return code;
 }
 
-export function createTicTacToeState(playerXToken: string): TicTacToeGameState {
+export function createTicTacToeState(playerXToken: string, username?: string): TicTacToeGameState {
   return {
     type: 'tictactoe',
     board: Array(9).fill(null),
     players: { X: playerXToken, O: null },
+    usernames: { X: username || null, O: null },
+    scores: { X: 0, O: 0 },
     currentTurn: 'X',
     status: 'waiting',
     winner: null,
@@ -71,5 +73,7 @@ export function toTicTacToePublicState(state: TicTacToeGameState, playerToken: s
     winLine: state.winLine,
     players: { X: !!state.players.X, O: !!state.players.O },
     you,
+    usernames: state.usernames ?? { X: null, O: null },
+    scores: state.scores ?? { X: 0, O: 0 },
   };
 }

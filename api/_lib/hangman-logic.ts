@@ -56,7 +56,7 @@ function createPlayerState(): HangmanPlayerState {
   };
 }
 
-export function createHangmanState(playerXToken: string, language: 'en' | 'el', category?: HangmanCategory): HangmanGameState {
+export function createHangmanState(playerXToken: string, language: 'en' | 'el', category?: HangmanCategory, username?: string): HangmanGameState {
   const resolvedCategory: HangmanCategory = category ?? 'other';
   return {
     type: 'hangman',
@@ -64,6 +64,8 @@ export function createHangmanState(playerXToken: string, language: 'en' | 'el', 
     language,
     category: resolvedCategory,
     players: { X: playerXToken, O: null },
+    usernames: { X: username || null, O: null },
+    scores: { X: 0, O: 0 },
     status: 'waiting',
     winner: null,
     lastActivity: Date.now(),
@@ -189,5 +191,16 @@ export function toHangmanPublicState(state: HangmanGameState, playerToken: strin
     opponentLives: opponentState.lives,
     opponentSolved: opponentState.solved,
     revealedWord: gameOver ? state.word : null,
+    usernames: state.usernames ?? { X: null, O: null },
+    scores: state.scores ?? { X: 0, O: 0 },
   };
+}
+
+export function getCategoryWordCounts(language: 'en' | 'el'): Record<string, number> {
+  const wordMap = language === 'en' ? enWords : elWords;
+  const counts: Record<string, number> = {};
+  for (const [cat, words] of Object.entries(wordMap as Record<string, string[]>)) {
+    counts[cat] = words.length;
+  }
+  return counts;
 }

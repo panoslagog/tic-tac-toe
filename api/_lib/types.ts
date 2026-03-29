@@ -7,6 +7,8 @@ export type HangmanCategory = 'animals' | 'food' | 'nature' | 'body' | 'home' | 
 interface BaseGameState {
   type: GameType;
   players: { X: string | null; O: string | null };
+  usernames: { X: string | null; O: string | null };
+  scores: { X: number; O: number };
   status: 'waiting' | 'playing' | 'won' | 'draw';
   winner: Player | null;
   lastActivity: number;
@@ -30,6 +32,8 @@ export interface TicTacToePublicState {
   winLine: number[] | null;
   players: { X: boolean; O: boolean };
   you: Player | null;
+  usernames: { X: string | null; O: string | null };
+  scores: { X: number; O: number };
 }
 
 // --- Hangman ---
@@ -68,6 +72,8 @@ export interface HangmanPublicState {
   opponentLives: number;
   opponentSolved: boolean;
   revealedWord: string | null;
+  usernames: { X: string | null; O: string | null };
+  scores: { X: number; O: number };
 }
 
 // --- Union ---

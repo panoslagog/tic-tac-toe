@@ -29,6 +29,17 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return res.status(400).json({ error: 'Game is still in progress' });
   }
 
+  const { category: newCategory, language: newLanguage } = req.body as { category?: string; language?: string };
+
+  // Ensure scores and usernames exist (for games created before this feature)
+  if (!state.scores) state.scores = { X: 0, O: 0 };
+  if (!state.usernames) state.usernames = { X: null, O: null };
+
+  // Increment winner's score before resetting
+  if (state.status === 'won' && state.winner) {
+    state.scores[state.winner] += 1;
+  }
+
   if (state.type === 'tictactoe') {
     state.board = Array(9).fill(null);
     state.currentTurn = state.currentTurn === 'X' ? 'O' : 'X';
@@ -41,7 +52,20 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 
   if (state.type === 'hangman') {
-    state.word = pickRandomWord(state.language, state.category);
+    // Update language/category if provided and valid
+    if (newLanguage === 'en' || newLanguage === 'el') {
+      state.language = newLanguage;
+    }
+    if (newCategory && newCategory !== 'random') {
+      const validCategories = ['animals', 'food', 'nature', 'body', 'home', 'places', 'sports', 'professions', 'clothing', 'music', 'other'];
+      if (validCategories.includes(newCategory)) {
+        state.category = newCategory as any;
+      }
+    } else if (newCategory === 'random') {
+      // pick random category by not passing a category to pickRandomWord
+      state.category = 'other'; // placeholder; word will be picked from all categories
+    }
+    state.word = pickRandomWord(state.language, newCategory === 'random' ? undefined : state.category);
     state.status = 'playing';
     state.winner = null;
     state.lastActivity = Date.now();

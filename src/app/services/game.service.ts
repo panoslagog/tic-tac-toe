@@ -3,8 +3,10 @@ import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { firstValueFrom } from 'rxjs';
 
 export type Player = 'X' | 'O';
+export type GameType = 'tictactoe' | 'hangman';
 
-export interface PublicGameState {
+export interface TicTacToePublicState {
+  type: 'tictactoe';
   board: (Player | null)[];
   currentTurn: Player;
   status: 'waiting' | 'playing' | 'won' | 'draw';
@@ -13,6 +15,24 @@ export interface PublicGameState {
   players: { X: boolean; O: boolean };
   you: Player | null;
 }
+
+export interface HangmanPublicState {
+  type: 'hangman';
+  language: 'en' | 'el';
+  status: 'waiting' | 'playing' | 'won' | 'draw';
+  winner: Player | null;
+  you: Player | null;
+  players: { X: boolean; O: boolean };
+  maskedWord: string;
+  guessedLetters: string[];
+  wrongGuesses: string[];
+  lives: number;
+  opponentLives: number;
+  opponentSolved: boolean;
+  revealedWord: string | null;
+}
+
+export type PublicGameState = TicTacToePublicState | HangmanPublicState;
 
 interface CreateGameResponse {
   roomCode: string;
@@ -23,6 +43,7 @@ interface CreateGameResponse {
 interface JoinGameResponse {
   playerToken: string;
   player: Player;
+  type: GameType;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -31,6 +52,7 @@ export class GameService {
   private _gameState = signal<PublicGameState | null>(null);
   private _roomCode = signal<string | null>(null);
   private _myPlayer = signal<Player | null>(null);
+  private _gameType = signal<GameType | null>(null);
   private pollingInterval: ReturnType<typeof setInterval> | null = null;
   private _error = signal<string | null>(null);
   private consecutiveFailures = 0;
@@ -39,13 +61,20 @@ export class GameService {
   gameState = this._gameState.asReadonly();
   roomCode = this._roomCode.asReadonly();
   myPlayer = this._myPlayer.asReadonly();
+  gameType = this._gameType.asReadonly();
   error = this._error.asReadonly();
   connectionLost = this._connectionLost.asReadonly();
 
   isMyTurn = computed(() => {
     const state = this._gameState();
+    if (!state || state.type !== 'tictactoe') return false;
     const me = this._myPlayer();
-    return state?.status === 'playing' && state.currentTurn === me;
+    return state.status === 'playing' && state.currentTurn === me;
+  });
+
+  tttState = computed(() => {
+    const s = this._gameState();
+    return s && s.type === 'tictactoe' ? s as TicTacToePublicState : null;
   });
 
   constructor(private http: HttpClient) {}
@@ -58,18 +87,22 @@ export class GameService {
     return h;
   }
 
-  async createGame(): Promise<string> {
+  async createGame(type: GameType = 'tictactoe', language?: 'en' | 'el'): Promise<{ roomCode: string; type: GameType }> {
+    const body: Record<string, string> = { type };
+    if (language) body['language'] = language;
+
     const res = await firstValueFrom(
-      this.http.post<CreateGameResponse>('/api/game', {})
+      this.http.post<CreateGameResponse>('/api/game', body)
     );
     this.playerToken.set(res.playerToken);
     this._roomCode.set(res.roomCode);
     this._myPlayer.set(res.player);
+    this._gameType.set(type);
     this.startPolling(res.roomCode);
-    return res.roomCode;
+    return { roomCode: res.roomCode, type };
   }
 
-  async joinGame(roomCode: string): Promise<void> {
+  async joinGame(roomCode: string): Promise<GameType> {
     const code = roomCode.toUpperCase().trim();
     try {
       const res = await firstValueFrom(
@@ -78,8 +111,10 @@ export class GameService {
       this.playerToken.set(res.playerToken);
       this._roomCode.set(code);
       this._myPlayer.set(res.player);
+      this._gameType.set(res.type);
       this._error.set(null);
       this.startPolling(code);
+      return res.type;
     } catch (err: any) {
       const msg = err?.error?.error || 'Failed to join game';
       this._error.set(msg);
@@ -95,14 +130,14 @@ export class GameService {
     );
   }
 
-  async makeMove(position: number): Promise<void> {
+  async makeMove(payload: { position: number } | { letter: string } | { word: string }): Promise<void> {
     const code = this._roomCode();
     if (!code) return;
     try {
       const res = await firstValueFrom(
         this.http.post<PublicGameState>(
           `/api/game/${code}/move`,
-          { position },
+          payload,
           { headers: this.headers() }
         )
       );
@@ -149,6 +184,7 @@ export class GameService {
     this._gameState.set(null);
     this._roomCode.set(null);
     this._myPlayer.set(null);
+    this._gameType.set(null);
     this._error.set(null);
     this.consecutiveFailures = 0;
     this._connectionLost.set(false);

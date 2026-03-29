@@ -1,7 +1,7 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { getGame, setGame } from '../../_lib/redis.js';
 import { getPlayerByToken } from '../../_lib/game-logic.js';
-import { pickRandomWord } from '../../_lib/hangman-logic.js';
+import { pickRandomWord, giveStartingLetter } from '../../_lib/hangman-logic.js';
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (req.method !== 'POST') {
@@ -49,6 +49,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       X: { guessedLetters: [], wrongGuesses: [], lives: 6, solved: false, solvedAt: null },
       O: { guessedLetters: [], wrongGuesses: [], lives: 6, solved: false, solvedAt: null },
     };
+    giveStartingLetter(state);
     await setGame(roomCode, state);
     return res.status(200).json({ ok: true });
   }

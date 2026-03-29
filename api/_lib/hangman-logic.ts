@@ -74,6 +74,18 @@ export function createHangmanState(playerXToken: string, language: 'en' | 'el', 
   };
 }
 
+export function giveStartingLetter(state: HangmanGameState): void {
+  const uniqueLetters = [...new Set(state.word.split(''))];
+  const letter = uniqueLetters[Math.floor(Math.random() * uniqueLetters.length)];
+  // Give the same random letter to both players
+  for (const player of ['X', 'O'] as Player[]) {
+    const ps = state.playerState[player];
+    if (!ps.guessedLetters.includes(letter)) {
+      ps.guessedLetters.push(letter);
+    }
+  }
+}
+
 function checkSolved(word: string, ps: HangmanPlayerState): boolean {
   const wordLetters = new Set(word.split(''));
   return [...wordLetters].every((ch) => ps.guessedLetters.includes(ch));

@@ -1,6 +1,7 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { v4 as uuidv4 } from 'uuid';
 import { getGame, setGame } from '../../_lib/redis.js';
+import { giveStartingLetter } from '../../_lib/hangman-logic.js';
 import type { JoinGameResponse } from '../../_lib/types.js';
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
@@ -23,6 +24,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   state.players.O = playerToken;
   state.status = 'playing';
   state.lastActivity = Date.now();
+  if (state.type === 'hangman') {
+    giveStartingLetter(state);
+  }
   await setGame(roomCode, state);
 
   const response: JoinGameResponse = {

@@ -1,6 +1,8 @@
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import { GameService } from '../services/game.service';
+import { HttpClient } from '@angular/common/http';
+import { firstValueFrom } from 'rxjs';
+import { GameService, PublicGameState } from '../services/game.service';
 
 @Component({
   selector: 'app-join',
@@ -27,23 +29,48 @@ import { GameService } from '../services/game.service';
 export class JoinComponent implements OnInit {
   private route = inject(ActivatedRoute);
   private router = inject(Router);
+  private http = inject(HttpClient);
   private gameService = inject(GameService);
 
   error = signal('');
 
   async ngOnInit() {
-    const roomCode = this.route.snapshot.paramMap.get('roomCode');
+    const roomCode = this.route.snapshot.paramMap.get('roomCode')?.toUpperCase();
     if (!roomCode) {
       this.error.set('Invalid join link.');
       return;
     }
 
-    try {
-      const type = await this.gameService.joinGame(roomCode);
-      this.router.navigate(['/game', type, roomCode.toUpperCase()], { replaceUrl: true });
-    } catch (err: any) {
-      this.error.set(err.message || 'Failed to join game.');
+    // If we're already in this game (same tab navigation), go straight to it
+    if (this.gameService.roomCode() === roomCode && this.gameService.myPlayer()) {
+      this.navigateToGame(roomCode);
+      return;
     }
+
+    // Try to fetch the game state first to check if it exists and get its type
+    try {
+      const state = await firstValueFrom(
+        this.http.get<PublicGameState>(`/api/game/${roomCode}`)
+      );
+
+      // Game is full — both players already joined
+      if (state.players.X && state.players.O) {
+        this.error.set('This game is full. Both players have already joined.');
+        return;
+      }
+
+      // Join the game
+      const type = await this.gameService.joinGame(roomCode);
+      this.router.navigate(['/game', type, roomCode], { replaceUrl: true });
+    } catch (err: any) {
+      const msg = err?.error?.error || err?.message || 'Failed to join game.';
+      this.error.set(msg);
+    }
+  }
+
+  private navigateToGame(roomCode: string) {
+    const type = this.gameService.gameType() ?? 'tictactoe';
+    this.router.navigate(['/game', type, roomCode], { replaceUrl: true });
   }
 
   goHome() {

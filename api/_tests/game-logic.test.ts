@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { checkWinner, generateRoomCode, validateMove, createInitialState } from '../_lib/game-logic';
+import { checkWinner, generateRoomCode, validateMove, createTicTacToeState } from '../_lib/game-logic';
 
 describe('checkWinner', () => {
   it('returns null for empty board', () => {
@@ -35,13 +35,13 @@ describe('checkWinner', () => {
 
 describe('validateMove', () => {
   it('rejects position out of range', () => {
-    const state = createInitialState('token-x');
+    const state = createTicTacToeState('token-x');
     expect(validateMove(state, 9, 'token-x')).toBe('Invalid position');
     expect(validateMove(state, -1, 'token-x')).toBe('Invalid position');
   });
 
   it('rejects move on occupied cell', () => {
-    const state = createInitialState('token-x');
+    const state = createTicTacToeState('token-x');
     state.board[4] = 'X';
     state.currentTurn = 'O';
     state.players.O = 'token-o';
@@ -50,26 +50,26 @@ describe('validateMove', () => {
   });
 
   it('rejects move when not your turn', () => {
-    const state = createInitialState('token-x');
+    const state = createTicTacToeState('token-x');
     state.players.O = 'token-o';
     state.status = 'playing';
     expect(validateMove(state, 0, 'token-o')).toBe('Not your turn');
   });
 
   it('rejects move from unknown player', () => {
-    const state = createInitialState('token-x');
+    const state = createTicTacToeState('token-x');
     state.players.O = 'token-o';
     state.status = 'playing';
     expect(validateMove(state, 0, 'unknown')).toBe('Not a player in this game');
   });
 
   it('rejects move when game is not playing', () => {
-    const state = createInitialState('token-x');
+    const state = createTicTacToeState('token-x');
     expect(validateMove(state, 0, 'token-x')).toBe('Game is not in progress');
   });
 
   it('accepts valid move', () => {
-    const state = createInitialState('token-x');
+    const state = createTicTacToeState('token-x');
     state.players.O = 'token-o';
     state.status = 'playing';
     expect(validateMove(state, 0, 'token-x')).toBeNull();
@@ -88,9 +88,10 @@ describe('generateRoomCode', () => {
   });
 });
 
-describe('createInitialState', () => {
+describe('createTicTacToeState', () => {
   it('creates a valid initial state', () => {
-    const state = createInitialState('my-token');
+    const state = createTicTacToeState('my-token');
+    expect(state.type).toBe('tictactoe');
     expect(state.board).toEqual(Array(9).fill(null));
     expect(state.players.X).toBe('my-token');
     expect(state.players.O).toBeNull();

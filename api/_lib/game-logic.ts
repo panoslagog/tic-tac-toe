@@ -1,9 +1,9 @@
-import type { GameState, Player } from './types.js';
+import type { TicTacToeGameState, TicTacToePublicState, GameState, Player } from './types.js';
 
 const WIN_LINES = [
-  [0, 1, 2], [3, 4, 5], [6, 7, 8], // rows
-  [0, 3, 6], [1, 4, 7], [2, 5, 8], // columns
-  [0, 4, 8], [2, 4, 6],             // diagonals
+  [0, 1, 2], [3, 4, 5], [6, 7, 8],
+  [0, 3, 6], [1, 4, 7], [2, 5, 8],
+  [0, 4, 8], [2, 4, 6],
 ];
 
 export function checkWinner(board: (Player | null)[]): { winner: Player; winLine: number[] } | null {
@@ -20,7 +20,7 @@ export function isDraw(board: (Player | null)[]): boolean {
   return board.every((cell) => cell !== null) && checkWinner(board) === null;
 }
 
-export function validateMove(state: GameState, position: number, playerToken: string): string | null {
+export function validateMove(state: TicTacToeGameState, position: number, playerToken: string): string | null {
   if (position < 0 || position > 8 || !Number.isInteger(position)) return 'Invalid position';
   if (state.status !== 'playing') return 'Game is not in progress';
 
@@ -47,8 +47,9 @@ export function generateRoomCode(): string {
   return code;
 }
 
-export function createInitialState(playerXToken: string): GameState {
+export function createTicTacToeState(playerXToken: string): TicTacToeGameState {
   return {
+    type: 'tictactoe',
     board: Array(9).fill(null),
     players: { X: playerXToken, O: null },
     currentTurn: 'X',
@@ -59,9 +60,10 @@ export function createInitialState(playerXToken: string): GameState {
   };
 }
 
-export function toPublicState(state: GameState, playerToken: string | null): import('./types.js').PublicGameState {
+export function toTicTacToePublicState(state: TicTacToeGameState, playerToken: string | null): TicTacToePublicState {
   const you = playerToken ? getPlayerByToken(state, playerToken) : null;
   return {
+    type: 'tictactoe',
     board: state.board,
     currentTurn: state.currentTurn,
     status: state.status,

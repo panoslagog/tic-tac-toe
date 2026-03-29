@@ -1,6 +1,6 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { getGame } from '../../_lib/redis.js';
-import { toPublicState } from '../../_lib/game-logic.js';
+import { toTicTacToePublicState } from '../../_lib/game-logic.js';
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (req.method !== 'GET') {
@@ -15,5 +15,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 
   const playerToken = req.headers['x-player-token'] as string | undefined;
-  return res.status(200).json(toPublicState(state, playerToken ?? null));
+
+  if (state.type === 'tictactoe') {
+    return res.status(200).json(toTicTacToePublicState(state, playerToken ?? null));
+  }
+
+  return res.status(400).json({ error: `Unknown game type: ${state.type}` });
 }

@@ -28,14 +28,17 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return res.status(400).json({ error: 'Game is still in progress' });
   }
 
-  // Reset the board, swap who goes first
-  state.board = Array(9).fill(null);
-  state.currentTurn = state.currentTurn === 'X' ? 'O' : 'X';
-  state.status = 'playing';
-  state.winner = null;
-  state.winLine = null;
-  state.lastActivity = Date.now();
+  if (state.type === 'tictactoe') {
+    state.board = Array(9).fill(null);
+    state.currentTurn = state.currentTurn === 'X' ? 'O' : 'X';
+    state.status = 'playing';
+    state.winner = null;
+    state.winLine = null;
+    state.lastActivity = Date.now();
 
-  await setGame(roomCode, state);
-  return res.status(200).json({ ok: true });
+    await setGame(roomCode, state);
+    return res.status(200).json({ ok: true });
+  }
+
+  return res.status(400).json({ error: `Unknown game type: ${state.type}` });
 }

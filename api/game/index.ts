@@ -1,12 +1,18 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { v4 as uuidv4 } from 'uuid';
 import { getGame, setGame } from '../_lib/redis.js';
-import { createInitialState, generateRoomCode } from '../_lib/game-logic.js';
+import { createTicTacToeState, generateRoomCode } from '../_lib/game-logic.js';
 import type { CreateGameResponse } from '../_lib/types.js';
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
+  }
+
+  const { type = 'tictactoe' } = req.body as { type?: string };
+
+  if (type !== 'tictactoe') {
+    return res.status(400).json({ error: `Unknown game type: ${type}` });
   }
 
   let roomCode: string;
@@ -23,7 +29,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 
   const playerToken = uuidv4();
-  const state = createInitialState(playerToken);
+  const state = createTicTacToeState(playerToken);
   await setGame(roomCode, state);
 
   const response: CreateGameResponse = {

@@ -28,6 +28,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   const response: JoinGameResponse = {
     playerToken,
     player: 'O',
+    type: state.type,
   };
   return res.status(200).json(response);
 }

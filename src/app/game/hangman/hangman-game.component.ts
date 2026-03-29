@@ -52,9 +52,20 @@ import { OpponentStatusComponent } from './opponent-status/opponent-status.compo
       @if (hangmanState(); as hs) {
         @if (hs.players.X && hs.players.O) {
           <div class="score-display">
-            <span class="score-player">{{ hs.usernames.X || 'Player X' }}: {{ hs.scores.X }}</span>
-            <span class="score-divider">-</span>
-            <span class="score-player">{{ hs.usernames.O || 'Player O' }}: {{ hs.scores.O }}</span>
+            <div class="score-row">
+              <span class="score-label">Session</span>
+              <span class="score-player">{{ hs.usernames.X || 'Player X' }}: {{ hs.scores.X }}</span>
+              <span class="score-divider">-</span>
+              <span class="score-player">{{ hs.usernames.O || 'Player O' }}: {{ hs.scores.O }}</span>
+            </div>
+            @if (lifetimeScores() && hs.usernames.X && hs.usernames.O) {
+              <div class="score-row lifetime">
+                <span class="score-label">All time</span>
+                <span class="score-player">{{ lifetimeScores()![hs.usernames.X!.toLowerCase()] ?? 0 }}</span>
+                <span class="score-divider">-</span>
+                <span class="score-player">{{ lifetimeScores()![hs.usernames.O!.toLowerCase()] ?? 0 }}</span>
+              </div>
+            }
           </div>
         }
 
@@ -139,7 +150,10 @@ import { OpponentStatusComponent } from './opponent-status/opponent-status.compo
     .game-area { display: flex; flex-direction: column; align-items: center; gap: 1.5rem; }
     .revealed { color: #a3a3a3; font-size: 1rem; }
     .revealed strong { color: #facc15; font-family: monospace; letter-spacing: 0.1em; }
-    .score-display { display: flex; align-items: center; gap: 0.5rem; font-size: 1rem; color: #a3a3a3; }
+    .score-display { display: flex; flex-direction: column; align-items: center; gap: 0.25rem; }
+    .score-row { display: flex; align-items: center; gap: 0.5rem; font-size: 1rem; color: #a3a3a3; }
+    .score-row.lifetime { font-size: 0.8rem; color: #737373; }
+    .score-label { font-size: 0.65rem; color: #525252; text-transform: uppercase; letter-spacing: 0.05em; min-width: 4rem; text-align: right; }
     .score-player { font-weight: 600; }
     .score-divider { color: #525252; }
     .rematch-options { display: flex; flex-direction: column; gap: 1rem; align-items: center; width: 100%; max-width: 380px; }
@@ -171,6 +185,7 @@ export class HangmanGameComponent implements OnInit, OnDestroy {
   nextCategory = signal<string>('random');
   nextLanguage = signal<'en' | 'el'>('en');
   categoryCounts = signal<Record<string, Record<string, number>>>({});
+  lifetimeScores = signal<Record<string, number> | null>(null);
 
   categories = [
     { key: 'animals', label: 'Animals' },
@@ -199,7 +214,6 @@ export class HangmanGameComponent implements OnInit, OnDestroy {
   myLives = computed(() => this.hangmanState()?.lives ?? 6);
 
   constructor() {
-    // When the game ends, initialize the next category/language from the current game state
     effect(() => {
       const hs = this.hangmanState();
       if (hs && (hs.status === 'won' || hs.status === 'draw')) {
@@ -209,6 +223,11 @@ export class HangmanGameComponent implements OnInit, OnDestroy {
         if (this.nextLanguage() === 'en' && hs.language) {
           this.nextLanguage.set(hs.language);
         }
+      }
+      // Fetch lifetime scores when both players have usernames
+      if (hs?.usernames?.X && hs?.usernames?.O) {
+        this.gameService.getLifetimeScores('hangman', hs.usernames.X, hs.usernames.O)
+          .then(scores => this.lifetimeScores.set(scores));
       }
     });
   }

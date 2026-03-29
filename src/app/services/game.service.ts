@@ -145,6 +145,17 @@ export class GameService {
     );
   }
 
+  async getLifetimeScores(gameType: GameType, name1: string, name2: string): Promise<Record<string, number>> {
+    try {
+      const res = await firstValueFrom(
+        this.http.get<Record<string, number>>(`/api/scoreboard?type=${gameType}&player1=${encodeURIComponent(name1)}&player2=${encodeURIComponent(name2)}`)
+      );
+      return res;
+    } catch {
+      return {};
+    }
+  }
+
   async makeMove(payload: { position: number } | { letter: string } | { word: string }): Promise<void> {
     const code = this._roomCode();
     if (!code) return;

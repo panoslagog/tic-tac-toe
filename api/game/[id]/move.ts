@@ -1,5 +1,5 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import { getGame, setGame } from '../../_lib/redis.js';
+import { getGame, setGame, recordWin } from '../../_lib/redis.js';
 import { validateMove, checkWinner, isDraw, getPlayerByToken, toTicTacToePublicState } from '../../_lib/game-logic.js';
 import { normalizeInput, processLetterGuess, processWordGuess, resolveHangmanOutcome, toHangmanPublicState } from '../../_lib/hangman-logic.js';
 
@@ -48,6 +48,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       state.status = 'won';
       state.winner = winResult.winner;
       state.winLine = winResult.winLine;
+      const winnerName = state.usernames[winResult.winner];
+      const loserName = state.usernames[winResult.winner === 'X' ? 'O' : 'X'];
+      if (winnerName && loserName) {
+        await recordWin('tictactoe', winnerName, loserName);
+      }
     } else if (isDraw(state.board)) {
       state.status = 'draw';
     } else {
@@ -84,7 +89,17 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
 
     state.lastActivity = Date.now();
+    const prevStatus = state.status;
     resolveHangmanOutcome(state);
+
+    if (state.status === 'won' && prevStatus === 'playing' && state.winner) {
+      const winnerName = state.usernames[state.winner];
+      const loserName = state.usernames[state.winner === 'X' ? 'O' : 'X'];
+      if (winnerName && loserName) {
+        await recordWin('hangman', winnerName, loserName);
+      }
+    }
+
     await setGame(roomCode, state);
 
     return res.status(200).json({

@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, signal, inject } from '@angular/core';
+import { Component, OnInit, OnDestroy, signal, inject, effect } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { GameService } from '../../services/game.service';
 import { BoardComponent } from '../board/board.component';
@@ -53,6 +53,15 @@ import { ConfettiComponent } from '../confetti/confetti.component';
           <span class="player-score">{{ tttState()?.scores?.O ?? 0 }}</span>
         </div>
       </div>
+
+      @if (lifetimeScores() && tttState()?.usernames?.X && tttState()?.usernames?.O) {
+        <div class="lifetime-score">
+          <span class="lifetime-label">All time:</span>
+          <span>{{ lifetimeScores()![tttState()!.usernames.X!.toLowerCase()] ?? 0 }}</span>
+          <span class="lifetime-divider">-</span>
+          <span>{{ lifetimeScores()![tttState()!.usernames.O!.toLowerCase()] ?? 0 }}</span>
+        </div>
+      }
 
       <div class="board-wrapper">
         <app-board
@@ -188,6 +197,22 @@ import { ConfettiComponent } from '../confetti/confetti.component';
       0%, 100% { opacity: 1; }
       50% { opacity: 0.7; }
     }
+    .lifetime-score {
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+      font-size: 0.8rem;
+      color: #737373;
+    }
+    .lifetime-label {
+      font-size: 0.65rem;
+      color: #525252;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+    .lifetime-divider {
+      color: #525252;
+    }
     .board-wrapper {
       position: relative;
     }
@@ -215,6 +240,7 @@ export class TicTacToeGameComponent implements OnInit, OnDestroy {
 
   emptyBoard: (null)[] = Array(9).fill(null);
   copied = signal(false);
+  lifetimeScores = signal<Record<string, number> | null>(null);
 
   gameState = this.gameService.gameState;
   roomCode = this.gameService.roomCode;
@@ -223,6 +249,16 @@ export class TicTacToeGameComponent implements OnInit, OnDestroy {
   connectionLost = this.gameService.connectionLost;
 
   tttState = this.gameService.tttState;
+
+  constructor() {
+    effect(() => {
+      const state = this.tttState();
+      if (state?.usernames?.X && state?.usernames?.O) {
+        this.gameService.getLifetimeScores('tictactoe', state.usernames.X, state.usernames.O)
+          .then(scores => this.lifetimeScores.set(scores));
+      }
+    });
+  }
 
   ngOnInit() {
     if (!this.gameService.roomCode()) {

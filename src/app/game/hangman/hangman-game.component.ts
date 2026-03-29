@@ -19,7 +19,7 @@ import { OpponentStatusComponent } from './opponent-status/opponent-status.compo
           <div class="room-badge" (click)="copyRoomCode()">
             <span class="room-label">Room</span>
             <span class="room-code">{{ roomCode() }}</span>
-            <span class="copy-hint">{{ copied() ? 'Copied!' : 'Click to copy' }}</span>
+            <span class="copy-hint">{{ copied() ? 'Link copied!' : 'Share invite link' }}</span>
           </div>
         }
       </div>
@@ -153,7 +153,8 @@ export class HangmanGameComponent implements OnInit, OnDestroy {
   async copyRoomCode() {
     const code = this.roomCode();
     if (!code) return;
-    await navigator.clipboard.writeText(code);
+    const link = `${window.location.origin}/join/${code}`;
+    await navigator.clipboard.writeText(link);
     this.copied.set(true);
     setTimeout(() => this.copied.set(false), 2000);
   }

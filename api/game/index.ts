@@ -1,8 +1,8 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { v4 as uuidv4 } from 'uuid';
-import { getGame, setGame } from '../_lib/redis';
-import { createInitialState, generateRoomCode } from '../_lib/game-logic';
-import type { CreateGameResponse } from '../_lib/types';
+import { getGame, setGame } from '../_lib/redis.js';
+import { createInitialState, generateRoomCode } from '../_lib/game-logic.js';
+import type { CreateGameResponse } from '../_lib/types.js';
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (req.method !== 'POST') {

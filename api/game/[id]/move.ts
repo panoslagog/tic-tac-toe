@@ -1,6 +1,6 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import { getGame, setGame } from '../../_lib/redis';
-import { validateMove, checkWinner, isDraw, getPlayerByToken, toPublicState } from '../../_lib/game-logic';
+import { getGame, setGame } from '../../_lib/redis.js';
+import { validateMove, checkWinner, isDraw, getPlayerByToken, toPublicState } from '../../_lib/game-logic.js';
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (req.method !== 'POST') {

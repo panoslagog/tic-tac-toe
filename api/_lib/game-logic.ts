@@ -1,4 +1,4 @@
-import type { GameState, Player } from './types';
+import type { GameState, Player } from './types.js';
 
 const WIN_LINES = [
   [0, 1, 2], [3, 4, 5], [6, 7, 8], // rows
@@ -59,7 +59,7 @@ export function createInitialState(playerXToken: string): GameState {
   };
 }
 
-export function toPublicState(state: GameState, playerToken: string | null): import('./types').PublicGameState {
+export function toPublicState(state: GameState, playerToken: string | null): import('./types.js').PublicGameState {
   const you = playerToken ? getPlayerByToken(state, playerToken) : null;
   return {
     board: state.board,

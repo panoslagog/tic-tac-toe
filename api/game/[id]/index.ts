@@ -1,6 +1,6 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import { getGame } from '../../_lib/redis';
-import { toPublicState } from '../../_lib/game-logic';
+import { getGame } from '../../_lib/redis.js';
+import { toPublicState } from '../../_lib/game-logic.js';
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (req.method !== 'GET') {

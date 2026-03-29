@@ -77,9 +77,9 @@ describe('validateMove', () => {
 });
 
 describe('generateRoomCode', () => {
-  it('returns a 6-character alphanumeric string', () => {
+  it('returns a 4-character alphanumeric string', () => {
     const code = generateRoomCode();
-    expect(code).toMatch(/^[A-Z0-9]{6}$/);
+    expect(code).toMatch(/^[A-Z0-9]{4}$/);
   });
 
   it('generates unique codes', () => {

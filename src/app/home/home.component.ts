@@ -42,7 +42,7 @@ interface CategoryOption {
         <div class="divider">or</div>
 
         <div class="join-section">
-          <input type="text" class="input-code" [ngModel]="joinCode" (ngModelChange)="joinCode = $event" placeholder="Enter room code" maxlength="6" (keyup.enter)="joinGame()" />
+          <input type="text" class="input-code" [ngModel]="joinCode" (ngModelChange)="joinCode = $event" placeholder="Enter room code" maxlength="4" (keyup.enter)="joinGame()" />
           <button class="btn btn-secondary" (click)="joinGame()" [disabled]="loading() || !joinCode">Join Game</button>
         </div>
       </div>

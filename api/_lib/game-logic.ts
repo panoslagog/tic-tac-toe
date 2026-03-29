@@ -39,7 +39,7 @@ export function getPlayerByToken(state: GameState, token: string): Player | null
 }
 
 export function generateRoomCode(): string {
-  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+  const chars = 'ABCDEFGHJKMNPQRSTUVWXYZ2345679';
   let code = '';
   for (let i = 0; i < 4; i++) {
     code += chars[Math.floor(Math.random() * chars.length)];

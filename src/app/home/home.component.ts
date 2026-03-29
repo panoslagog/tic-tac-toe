@@ -18,6 +18,8 @@ interface CategoryOption {
       <p class="subtitle">Play with a friend online</p>
 
       <div class="actions">
+        <input type="text" class="input-username" [ngModel]="usernameInput()" (ngModelChange)="usernameInput.set($event)" placeholder="Your name (optional)" maxlength="15" />
+
         <div class="game-type-picker">
           <button class="type-btn" [class.active]="selectedType() === 'tictactoe'" (click)="selectedType.set('tictactoe')">Tic Tac Toe</button>
           <button class="type-btn" [class.active]="selectedType() === 'hangman'" (click)="selectedType.set('hangman')">Hangman</button>
@@ -75,6 +77,9 @@ interface CategoryOption {
     .btn-secondary:hover:not(:disabled) { box-shadow: 0 0 20px rgba(251, 113, 133, 0.3); }
     .divider { color: #525252; font-size: 0.875rem; text-transform: uppercase; letter-spacing: 0.1em; }
     .join-section { display: flex; flex-direction: column; gap: 0.75rem; width: 100%; }
+    .input-username { width: 100%; padding: 0.875rem 1rem; border: 1px solid #333; border-radius: 12px; background: #171717; color: #e5e5e5; font-size: 1rem; text-align: left; outline: none; box-sizing: border-box; }
+    .input-username:focus { border-color: #22d3ee; }
+    .input-username::placeholder { color: #525252; }
     .input-code { width: 100%; padding: 0.875rem 1rem; border: 1px solid #333; border-radius: 12px; background: #171717; color: #e5e5e5; font-size: 1.1rem; font-family: monospace; text-align: center; letter-spacing: 0.2em; text-transform: uppercase; outline: none; box-sizing: border-box; }
     .input-code:focus { border-color: #fb7185; }
     .error { color: #f87171; margin-top: 1rem; font-size: 0.875rem; }
@@ -87,6 +92,7 @@ export class HomeComponent {
   selectedType = signal<GameType>('tictactoe');
   selectedLanguage = signal<'en' | 'el'>('en');
   selectedCategory = signal<string>('random');
+  usernameInput = signal('');
 
   categoryOptions: CategoryOption[] = [
     { value: 'random', label: 'Random' },
@@ -112,7 +118,7 @@ export class HomeComponent {
       const language = type === 'hangman' ? this.selectedLanguage() : undefined;
       const rawCategory = this.selectedCategory();
       const category = type === 'hangman' && rawCategory !== 'random' ? rawCategory : undefined;
-      const { roomCode } = await this.gameService.createGame(type, language, category);
+      const { roomCode } = await this.gameService.createGame(type, language, category, this.usernameInput().trim() || undefined);
       this.router.navigate(['/game', type, roomCode]);
     } catch {
       this.errorMsg.set('Failed to create game. Please try again.');
@@ -127,7 +133,7 @@ export class HomeComponent {
     this.loading.set(true);
     this.errorMsg.set('');
     try {
-      const type = await this.gameService.joinGame(code);
+      const type = await this.gameService.joinGame(code, this.usernameInput().trim() || undefined);
       this.router.navigate(['/game', type, code.toUpperCase()]);
     } catch (err: any) {
       this.errorMsg.set(err.message || 'Failed to join game.');

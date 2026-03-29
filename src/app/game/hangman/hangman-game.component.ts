@@ -1,5 +1,7 @@
-import { Component, OnInit, OnDestroy, signal, inject, computed } from '@angular/core';
+import { Component, OnInit, OnDestroy, signal, inject, computed, effect } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
+import { HttpClient } from '@angular/common/http';
+import { firstValueFrom } from 'rxjs';
 import { GameService, HangmanPublicState, HangmanCategory } from '../../services/game.service';
 import { GallowsComponent } from './gallows/gallows.component';
 import { WordDisplayComponent } from './word-display/word-display.component';
@@ -48,6 +50,14 @@ import { OpponentStatusComponent } from './opponent-status/opponent-status.compo
       </div>
 
       @if (hangmanState(); as hs) {
+        @if (hs.players.X && hs.players.O) {
+          <div class="score-display">
+            <span class="score-player">{{ hs.usernames.X || 'Player X' }}: {{ hs.scores.X }}</span>
+            <span class="score-divider">-</span>
+            <span class="score-player">{{ hs.usernames.O || 'Player O' }}: {{ hs.scores.O }}</span>
+          </div>
+        }
+
         <div class="lives-display">
           <span class="lives-label">Your lives:</span>
           <div class="hearts">
@@ -78,6 +88,22 @@ import { OpponentStatusComponent } from './opponent-status/opponent-status.compo
         }
 
         @if (hs.status === 'won' || hs.status === 'draw') {
+          <div class="rematch-options">
+            <div class="language-picker">
+              <button class="lang-btn" [class.active]="nextLanguage() === 'en'" (click)="nextLanguage.set('en')">English</button>
+              <button class="lang-btn" [class.active]="nextLanguage() === 'el'" (click)="nextLanguage.set('el')">Greek</button>
+            </div>
+            <div class="category-grid">
+              <button class="cat-btn" [class.active]="nextCategory() === 'random'" (click)="nextCategory.set('random')">
+                Random <span class="cat-count">(all)</span>
+              </button>
+              @for (cat of categories; track cat.key) {
+                <button class="cat-btn" [class.active]="nextCategory() === cat.key" (click)="nextCategory.set(cat.key)">
+                  {{ cat.label }} <span class="cat-count">({{ getCatCount(cat.key) }})</span>
+                </button>
+              }
+            </div>
+          </div>
           <button class="btn btn-primary play-again" (click)="playAgain()">Play Again</button>
         }
       }
@@ -113,12 +139,24 @@ import { OpponentStatusComponent } from './opponent-status/opponent-status.compo
     .game-area { display: flex; flex-direction: column; align-items: center; gap: 1.5rem; }
     .revealed { color: #a3a3a3; font-size: 1rem; }
     .revealed strong { color: #facc15; font-family: monospace; letter-spacing: 0.1em; }
+    .score-display { display: flex; align-items: center; gap: 0.5rem; font-size: 1rem; color: #a3a3a3; }
+    .score-player { font-weight: 600; }
+    .score-divider { color: #525252; }
+    .rematch-options { display: flex; flex-direction: column; gap: 1rem; align-items: center; width: 100%; max-width: 380px; }
+    .language-picker { display: flex; gap: 0.5rem; width: 100%; }
+    .lang-btn { flex: 1; padding: 0.5rem; border: 1px solid #333; border-radius: 8px; background: #171717; color: #a3a3a3; font-size: 0.85rem; font-weight: 600; cursor: pointer; transition: all 0.15s; }
+    .lang-btn.active { border-color: #a78bfa; color: #a78bfa; background: rgba(167, 139, 250, 0.08); }
+    .category-grid { display: flex; flex-wrap: wrap; gap: 0.4rem; justify-content: center; width: 100%; }
+    .cat-btn { padding: 0.3rem 0.6rem; border: 1px solid #333; border-radius: 16px; background: #171717; color: #a3a3a3; font-size: 0.75rem; font-weight: 600; cursor: pointer; transition: all 0.15s; }
+    .cat-btn.active { border-color: #fb923c; color: #fb923c; background: rgba(251, 146, 60, 0.08); }
+    .cat-count { font-weight: 400; opacity: 0.6; }
     .play-again { padding: 0.875rem 2rem; border: none; border-radius: 12px; font-size: 1rem; font-weight: 600; cursor: pointer; transition: transform 0.15s, box-shadow 0.15s; background: #22d3ee; color: #0a0a0a; }
     .play-again:hover { transform: scale(1.03); box-shadow: 0 0 20px rgba(34, 211, 238, 0.3); }
   `],
 })
 export class HangmanGameComponent implements OnInit, OnDestroy {
   private gameService = inject(GameService);
+  private http = inject(HttpClient);
   private route = inject(ActivatedRoute);
   private router = inject(Router);
 
@@ -129,6 +167,24 @@ export class HangmanGameComponent implements OnInit, OnDestroy {
   roomCode = this.gameService.roomCode;
   myPlayer = this.gameService.myPlayer;
   connectionLost = this.gameService.connectionLost;
+
+  nextCategory = signal<string>('random');
+  nextLanguage = signal<'en' | 'el'>('en');
+  categoryCounts = signal<Record<string, Record<string, number>>>({});
+
+  categories = [
+    { key: 'animals', label: 'Animals' },
+    { key: 'food', label: 'Food & Drink' },
+    { key: 'nature', label: 'Nature' },
+    { key: 'body', label: 'Body Parts' },
+    { key: 'home', label: 'Home & Objects' },
+    { key: 'places', label: 'Places' },
+    { key: 'sports', label: 'Sports' },
+    { key: 'professions', label: 'Professions' },
+    { key: 'clothing', label: 'Clothing' },
+    { key: 'music', label: 'Music' },
+    { key: 'other', label: 'Other' },
+  ];
 
   hangmanState = computed(() => {
     const s = this.gameState();
@@ -142,14 +198,47 @@ export class HangmanGameComponent implements OnInit, OnDestroy {
 
   myLives = computed(() => this.hangmanState()?.lives ?? 6);
 
-  ngOnInit() {
+  constructor() {
+    // When the game ends, initialize the next category/language from the current game state
+    effect(() => {
+      const hs = this.hangmanState();
+      if (hs && (hs.status === 'won' || hs.status === 'draw')) {
+        if (!this.nextCategory()) {
+          this.nextCategory.set(hs.category ?? 'random');
+        }
+        if (this.nextLanguage() === 'en' && hs.language) {
+          this.nextLanguage.set(hs.language);
+        }
+      }
+    });
+  }
+
+  async ngOnInit() {
     if (!this.gameService.roomCode()) {
       this.router.navigate(['/']);
+      return;
     }
+    // Initialize from current state if available
+    const hs = this.hangmanState();
+    if (hs) {
+      this.nextLanguage.set(hs.language ?? 'en');
+      this.nextCategory.set(hs.category ?? 'random');
+    }
+    try {
+      const counts = await firstValueFrom(
+        this.http.get<Record<string, Record<string, number>>>('/api/game/categories')
+      );
+      this.categoryCounts.set(counts);
+    } catch {}
   }
 
   ngOnDestroy() {
     this.gameService.stopPolling();
+  }
+
+  getCatCount(cat: string): number {
+    const lang = this.nextLanguage();
+    return this.categoryCounts()?.[lang]?.[cat] ?? 0;
   }
 
   async onLetterClick(letter: string) {
@@ -170,7 +259,12 @@ export class HangmanGameComponent implements OnInit, OnDestroy {
   }
 
   async playAgain() {
-    await this.gameService.rematch();
+    const cat = this.nextCategory();
+    const lang = this.nextLanguage();
+    await this.gameService.rematch(
+      cat !== 'random' ? cat : undefined,
+      lang,
+    );
   }
 
   categoryLabel(category: HangmanCategory): string {

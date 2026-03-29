@@ -15,6 +15,8 @@ export interface TicTacToePublicState {
   winLine: number[] | null;
   players: { X: boolean; O: boolean };
   you: Player | null;
+  usernames: { X: string | null; O: string | null };
+  scores: { X: number; O: number };
 }
 
 export interface HangmanPublicState {
@@ -32,6 +34,8 @@ export interface HangmanPublicState {
   opponentLives: number;
   opponentSolved: boolean;
   revealedWord: string | null;
+  usernames: { X: string | null; O: string | null };
+  scores: { X: number; O: number };
 }
 
 export type PublicGameState = TicTacToePublicState | HangmanPublicState;
@@ -59,6 +63,7 @@ export class GameService {
   private _error = signal<string | null>(null);
   private consecutiveFailures = 0;
   private _connectionLost = signal(false);
+  private _username = signal<string | null>(null);
 
   gameState = this._gameState.asReadonly();
   roomCode = this._roomCode.asReadonly();
@@ -66,6 +71,7 @@ export class GameService {
   gameType = this._gameType.asReadonly();
   error = this._error.asReadonly();
   connectionLost = this._connectionLost.asReadonly();
+  username = this._username.asReadonly();
 
   isMyTurn = computed(() => {
     const state = this._gameState();
@@ -89,10 +95,11 @@ export class GameService {
     return h;
   }
 
-  async createGame(type: GameType = 'tictactoe', language?: 'en' | 'el', category?: string): Promise<{ roomCode: string; type: GameType }> {
+  async createGame(type: GameType = 'tictactoe', language?: 'en' | 'el', category?: string, username?: string): Promise<{ roomCode: string; type: GameType }> {
     const body: Record<string, string> = { type };
     if (language) body['language'] = language;
     if (category) body['category'] = category;
+    if (username) body['username'] = username;
 
     const res = await firstValueFrom(
       this.http.post<CreateGameResponse>('/api/game', body)
@@ -101,20 +108,22 @@ export class GameService {
     this._roomCode.set(res.roomCode);
     this._myPlayer.set(res.player);
     this._gameType.set(type);
+    this._username.set(username || null);
     this.startPolling(res.roomCode);
     return { roomCode: res.roomCode, type };
   }
 
-  async joinGame(roomCode: string): Promise<GameType> {
+  async joinGame(roomCode: string, username?: string): Promise<GameType> {
     const code = roomCode.toUpperCase().trim();
     try {
       const res = await firstValueFrom(
-        this.http.post<JoinGameResponse>(`/api/game/${code}/join`, {})
+        this.http.post<JoinGameResponse>(`/api/game/${code}/join`, { username })
       );
       this.playerToken.set(res.playerToken);
       this._roomCode.set(code);
       this._myPlayer.set(res.player);
       this._gameType.set(res.type);
+      this._username.set(username || null);
       this._error.set(null);
       this.startPolling(code);
       return res.type;
@@ -125,11 +134,14 @@ export class GameService {
     }
   }
 
-  async rematch(): Promise<void> {
+  async rematch(category?: string, language?: string): Promise<void> {
     const code = this._roomCode();
     if (!code) return;
+    const body: Record<string, string> = {};
+    if (category) body['category'] = category;
+    if (language) body['language'] = language;
     await firstValueFrom(
-      this.http.post(`/api/game/${code}/rematch`, {}, { headers: this.headers() })
+      this.http.post(`/api/game/${code}/rematch`, body, { headers: this.headers() })
     );
   }
 
@@ -189,6 +201,7 @@ export class GameService {
     this._myPlayer.set(null);
     this._gameType.set(null);
     this._error.set(null);
+    this._username.set(null);
     this.consecutiveFailures = 0;
     this._connectionLost.set(false);
   }

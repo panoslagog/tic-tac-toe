@@ -44,11 +44,13 @@ import { ConfettiComponent } from '../confetti/confetti.component';
       <div class="player-indicators">
         <div class="player" [class.active]="tttState()?.currentTurn === 'X'" [class.you]="myPlayer() === 'X'">
           <span class="player-mark x">X</span>
-          <span class="player-label">{{ myPlayer() === 'X' ? 'You' : 'Opponent' }}</span>
+          <span class="player-label">{{ tttState()?.usernames?.X || (myPlayer() === 'X' ? 'You' : 'Opponent') }}</span>
+          <span class="player-score">{{ tttState()?.scores?.X ?? 0 }}</span>
         </div>
         <div class="player" [class.active]="tttState()?.currentTurn === 'O'" [class.you]="myPlayer() === 'O'">
           <span class="player-mark o">O</span>
-          <span class="player-label">{{ myPlayer() === 'O' ? 'You' : 'Opponent' }}</span>
+          <span class="player-label">{{ tttState()?.usernames?.O || (myPlayer() === 'O' ? 'You' : 'Opponent') }}</span>
+          <span class="player-score">{{ tttState()?.scores?.O ?? 0 }}</span>
         </div>
       </div>
 
@@ -174,6 +176,13 @@ import { ConfettiComponent } from '../confetti/confetti.component';
     .player-label {
       font-size: 0.85rem;
       color: #a3a3a3;
+    }
+    .player-score {
+      font-size: 0.9rem;
+      font-weight: 700;
+      color: #facc15;
+      margin-left: 0.25rem;
+      min-width: 1ch;
     }
     @keyframes pulse {
       0%, 100% { opacity: 1; }

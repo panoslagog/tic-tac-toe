@@ -236,8 +236,6 @@ export class GameComponent implements OnInit, OnDestroy {
   }
 
   async playAgain() {
-    this.gameService.reset();
-    const roomCode = await this.gameService.createGame();
-    this.router.navigate(['/game', roomCode]);
+    await this.gameService.rematch();
   }
 }

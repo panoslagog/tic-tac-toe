@@ -87,6 +87,14 @@ export class GameService {
     }
   }
 
+  async rematch(): Promise<void> {
+    const code = this._roomCode();
+    if (!code) return;
+    await firstValueFrom(
+      this.http.post(`/api/game/${code}/rematch`, {}, { headers: this.headers() })
+    );
+  }
+
   async makeMove(position: number): Promise<void> {
     const code = this._roomCode();
     if (!code) return;
